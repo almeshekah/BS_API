@@ -10,13 +10,15 @@ const { localStrategy, jwtStrategy } = require("./middleware/passport");
 passport.use(localStrategy);
 passport.use(jwtStrategy);
 
+let User = mongoose.model("UserModel");
+
 const userRoutes = require("./routes/users");
-const shopRoutes = require("./routes/shop");
+//const shopRoutes = require("./routes/shop");
 app.use(cors());
 app.use(express.json());
 //Routes
 app.use(userRoutes);
-app.use("/shop", shopRoutes);
+//app.use("/shop", shopRoutes);
 
 app.use((req, res, next) => {
 	const error = new Error("Path Not Found");

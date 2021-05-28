@@ -1,10 +1,10 @@
-const User = require("../model/User");
+const mongoose = require("mongoose");
+let User = mongoose.model("UserModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET, JWT_EXPIRATION_MS } = require("../config/keys");
-
 exports.signup = async (req, res, next) => {
-	const { username, password } = req.body;
+	const { password } = req.body;
 	const saltRounds = 10;
 	try {
 		const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -13,26 +13,31 @@ exports.signup = async (req, res, next) => {
 		const payload = {
 			id: newUser.id,
 			username: newUser.username,
+			email: newUser.email,
+			phone: newUser.firstName,
 			exp: Date.now() + JWT_EXPIRATION_MS,
 		};
+
 		const token = jwt.sign(JSON.stringify(payload), JWT_SECRET);
 		res.status(201).json({ token });
-		console.log("done");
 	} catch (error) {
 		next(error);
 	}
 };
-exports.signin = (req, res) => {
-	const { user } = req;
-	const payload = {
-		id: user.id,
-		username: user.username,
-		firstName: user.firstName,
-		lastName: user.lastName,
-		email: user.email,
 
-		exp: Date.now() + JWT_EXPIRATION_MS,
-	};
-	const token = jwt.sign(JSON.stringify(payload), JWT_SECRET);
-	res.status(201).json({ token });
+exports.signin = async (req, res) => {
+	const { username, password } = req.body;
+	const user = await User.findOne({ username }).lean();
+	if (!user) {
+		return res.json({ status: "error", error: "Invalid username/password" });
+	}
+	if (await bcrypt.compare(password, user.password)) {
+		const token = jwt.sign(
+			{ id: user._id, username: user.username },
+			JWT_SECRET
+		);
+		return res.json({ status: "ok", date: token });
+	}
+
+	res.json({ status: "error", error: "Invalid username/password" });
 };
