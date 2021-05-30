@@ -36,7 +36,7 @@ exports.signin = async (req, res) => {
 			{ id: user._id, username: user.username },
 			JWT_SECRET
 		);
-		return res.json({ status: "ok", date: token });
+		return res.json({ token });
 	}
 
 	res.json({ status: "error", error: "Invalid username/password" });
